@@ -1,0 +1,72 @@
+---
+title: "MD01 Loading"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+r_libs_user <- Sys.getenv("R_LIBS_USER")
+if (r_libs_user == "") stop("R_LIBS_USER is not set.")
+.libPaths(c(r_libs_user, .libPaths()))
+
+library(fs)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+pro_dir <- Sys.getenv("PRODIR")
+if (pro_dir == "") stop("PRODIR is not set.")
+
+garmin_file <- file.path(pro_dir, "garmin_all_raw.rds")
+if (!file.exists(garmin_file)) stop("Missing file: ", garmin_file)
+
+garmin_all <- readRDS(garmin_file)
+if (nrow(garmin_all) == 0) stop("garmin_all is empty.")
+```
+
+```{r overview}
+## Overview
+overview <- tibble(
+  metric = c("Rows", "Columns", "Participants", "Data types"),
+  value = c(
+    nrow(garmin_all),
+    ncol(garmin_all),
+    n_distinct(garmin_all$participant_id),
+    n_distinct(garmin_all$data_type)
+  )
+)
+
+knitr::kable(overview)
+```
+
+```{r participant rows}
+## Participant rows
+participant_counts <- garmin_all %>%
+  count(participant_id, name = "n_rows") %>%
+  arrange(desc(n_rows))
+
+ggplot(participant_counts, aes(x = reorder(participant_id, n_rows), y = n_rows)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Rows per participant",
+    x = "Participant ID",
+    y = "Rows"
+  )
+```
+
+```{r per data}
+## Participant per data type
+datatype_counts <- garmin_all %>%
+  distinct(participant_id, data_type) %>%
+  count(data_type, name = "n_participants") %>%
+  arrange(desc(n_participants))
+
+ggplot(datatype_counts, aes(x = reorder(data_type, n_participants), y = n_participants)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Participants per data type",
+    x = "Data type",
+    y = "Participants"
+  )
+```

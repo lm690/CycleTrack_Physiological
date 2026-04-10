@@ -1,0 +1,256 @@
+---
+title: "03 Daily Summaries"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+r_libs_user <- Sys.getenv("R_LIBS_USER")
+if (r_libs_user == "") stop("R_LIBS_USER is not set.")
+.libPaths(c(r_libs_user, .libPaths()))
+
+library(dplyr)
+library(fs)
+library(ggplot2)
+library(knitr)
+
+day_folder <- Sys.getenv("DAILYDIR")
+if (day_folder == "") stop("DAILYDIR is not set.")
+
+daily_all_file <- file.path(day_folder, "garmin_daily_all_simple.rds")
+if (!file.exists(daily_all_file)) stop("Missing file: ", daily_all_file)
+
+daily_all <- readRDS(daily_all_file)
+
+if (nrow(daily_all) == 0) stop("daily_all is empty.")
+
+if (!"date" %in% names(daily_all)) stop("date column is missing from daily_all.")
+daily_all$date <- as.Date(daily_all$date)
+
+# Adherence file
+adherence_file <- file.path(day_folder, "garmin_daily_adherence.rds")
+has_adherence <- file.exists(adherence_file)
+
+if (has_adherence) {
+  daily_adherence <- readRDS(adherence_file)
+  daily_adherence$date <- as.Date(daily_adherence$date)
+}
+```
+
+```{r dataset overview}
+## Dataset Overview
+overview <- tibble(
+  metric = c(
+    "Rows (participant-days)",
+    "Participants",
+    "First date",
+    "Last date"
+  ),
+  value = c(
+    nrow(daily_all),
+    dplyr::n_distinct(daily_all$participant_id),
+    as.character(min(daily_all$date, na.rm = TRUE)),
+    as.character(max(daily_all$date, na.rm = TRUE))
+  )
+)
+
+knitr::kable(overview)
+```
+
+```{r participant coverage}
+## Participant coverage
+participant_days <- daily_all %>%
+  group_by(participant_id) %>%
+  summarise(
+    n_days = n_distinct(date),
+    .groups = "drop"
+  )
+
+ggplot(participant_days, aes(x = n_days)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Number of observed days per participant",
+    x = "Observed days",
+    y = "Number of participants"
+  )
+```
+
+
+```{r steps}
+## Steps
+if ("steps_sum_24hr" %in% names(daily_all)) {
+  ggplot(daily_all %>% filter(!is.na(steps_sum_24hr)),
+         aes(x = steps_sum_24hr)) +
+    geom_histogram(bins = 40) +
+    labs(
+      title = "Distribution of daily steps",
+      x = "Steps per day",
+      y = "Participant-days"
+    )
+}
+
+if ("steps_sum_24hr" %in% names(daily_all)) {
+  steps_participant <- daily_all %>%
+    group_by(participant_id) %>%
+    summarise(
+      median_steps = median(steps_sum_24hr, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(!is.na(median_steps))
+
+  ggplot(steps_participant, aes(x = median_steps)) +
+    geom_histogram(bins = 30) +
+    labs(
+      title = "Distribution of median daily steps by participant",
+      x = "Participant median daily steps",
+      y = "Number of participants"
+    )
+}
+```
+
+```{r hr}
+## Heart rate
+if ("hr_mean_24hr" %in% names(daily_all)) {
+  ggplot(daily_all %>% filter(!is.na(hr_mean_24hr)),
+         aes(x = hr_mean_24hr)) +
+    geom_histogram(bins = 40) +
+    labs(
+      title = "Distribution of mean daily heart rate",
+      x = "Mean heart rate per day",
+      y = "Participant-days"
+    )
+}
+if ("hr_mean_24hr" %in% names(daily_all)) {
+  hr_participant <- daily_all %>%
+    group_by(participant_id) %>%
+    summarise(
+      median_hr = median(hr_mean_24hr, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(!is.na(median_hr))
+
+  ggplot(hr_participant, aes(x = median_hr)) +
+    geom_histogram(bins = 30) +
+    labs(
+      title = "Distribution of median daily heart rate by participant",
+      x = "Participant median daily heart rate",
+      y = "Number of participants"
+    )
+}
+```
+
+```{r stress}
+## Stress
+if ("stress_mean_24hr" %in% names(daily_all)) {
+  ggplot(daily_all %>% filter(!is.na(stress_mean_24hr)),
+         aes(x = stress_mean_24hr)) +
+    geom_histogram(bins = 40) +
+    labs(
+      title = "Distribution of mean daily stress",
+      x = "Mean stress per day",
+      y = "Participant-days"
+    )
+}
+
+if ("stress_mean_24hr" %in% names(daily_all)) {
+  stress_participant <- daily_all %>%
+    group_by(participant_id) %>%
+    summarise(
+      median_stress = median(stress_mean_24hr, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(!is.na(median_stress))
+
+  ggplot(stress_participant, aes(x = median_stress)) +
+    geom_histogram(bins = 30) +
+    labs(
+      title = "Distribution of median daily stress by participant",
+      x = "Participant median daily stress",
+      y = "Number of participants"
+    )
+}
+```
+
+```{r bbi}
+## BBI
+if ("n_nonmissing_bbi" %in% names(daily_all)) {
+  ggplot(daily_all %>% filter(!is.na(n_nonmissing_bbi)),
+         aes(x = n_nonmissing_bbi)) +
+    geom_histogram(bins = 40) +
+    labs(
+      title = "Distribution of non-missing BBI rows per day",
+      x = "Non-missing BBI rows per day",
+      y = "Participant-days"
+    )
+}
+
+if ("n_nonmissing_bbi" %in% names(daily_all)) {
+  bbi_participant <- daily_all %>%
+    group_by(participant_id) %>%
+    summarise(
+      median_bbi_rows = median(n_nonmissing_bbi, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(!is.na(median_bbi_rows))
+
+  ggplot(bbi_participant, aes(x = median_bbi_rows)) +
+    geom_histogram(bins = 30) +
+    labs(
+      title = "Distribution of median daily non-missing BBI rows by participant",
+      x = "Participant median non-missing BBI rows",
+      y = "Number of participants"
+    )
+}
+```
+
+```{r adherence}
+## Adherence (requires script 04)
+if (has_adherence) {
+  ggplot(daily_adherence %>% filter(!is.na(adherence_weartimepc_24hr)),
+         aes(x = adherence_weartimepc_24hr)) +
+    geom_histogram(bins = 40) +
+    labs(
+      title = "Distribution of daily adherence percentage",
+      x = "Adherence (% of 24 hours)",
+      y = "Participant-days"
+    )
+}
+
+if (has_adherence) {
+  valid_days <- daily_adherence %>%
+    mutate(valid_day = adherence_weartimepc_24hr >= 70) %>%
+    group_by(participant_id) %>%
+    summarise(
+      n_valid_days = sum(valid_day, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  ggplot(valid_days, aes(x = n_valid_days)) +
+    geom_histogram(bins = 30) +
+    labs(
+      title = "Number of valid adherence days per participant",
+      x = "Valid days (>= 70% wear time)",
+      y = "Number of participants"
+    )
+}
+```
+
+```{r missing check}
+## Missingness
+vars_to_check <- c(
+  "steps_sum_24hr",
+  "hr_mean_24hr",
+  "stress_mean_24hr",
+  "n_nonmissing_bbi"
+)
+
+vars_to_check <- vars_to_check[vars_to_check %in% names(daily_all)]
+
+missing_summary <- tibble(
+  variable = vars_to_check,
+  n_nonmissing = sapply(vars_to_check, function(v) sum(!is.na(daily_all[[v]]))),
+  n_missing = sapply(vars_to_check, function(v) sum(is.na(daily_all[[v]]))),
+  pct_missing = sapply(vars_to_check, function(v) mean(is.na(daily_all[[v]])) * 100)
+)
+
+knitr::kable(missing_summary, digits = 1)
+```
