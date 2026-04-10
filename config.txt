@@ -1,0 +1,24 @@
+## ---- Data directories ----
+export DATADIR="${PROJECTDIR}/data"
+
+export RAWDATADIR="${DATADIR}/1_raw"
+export PRODIR="${DATADIR}/2_processed"
+export TYPEDIR="${DATADIR}/3_type"
+export DAILYDIR="${DATADIR}/4_daily"
+
+## ---- Scripts ----
+export SCRIPTSDIR="${PROJECTDIR}/Scripts"
+
+## ---- R library (user-specific project library) ----
+export R_LIBS_USER="${PROJECTDIR}/R_libs"
+
+## ---- R Markdown output ----
+export RMDDIR="${PROJECTDIR}/RMarkdowns"
+
+## ---- R module (HPC environment) ----
+export RVERS="R/4.2.1-foss-2022a"
+
+## Pandoc
+export PANDOCHOME="${PROJECTDIR}/pandoc"
+export PANDOCDIR="${PANDOCHOME}/bin"
+export TMPDIRPANDOC="${PROJECTDIR}/tmp"
