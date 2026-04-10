@@ -1,0 +1,36 @@
+## =========================================================
+## 00_Setup
+## Purpose: Create R library and install required packages
+## =========================================================
+
+lib <- Sys.getenv("R_LIBS_USER")
+
+if (lib == "") {
+  stop("R_LIBS_USER is not set. Make sure config.txt was sourced before running R.")
+}
+
+dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(lib, .libPaths()))
+
+required_packages <- c(
+  "tibble",
+  "dplyr",
+  "readr",
+  "ggplot2",
+  "stringr",
+  "fs",
+  "rmarkdown",
+  "knitr"
+)
+
+repos <- "https://cloud.r-project.org"
+
+installed <- rownames(installed.packages(lib.loc = .libPaths()))
+missing <- setdiff(required_packages, installed)
+
+if (length(missing) > 0) {
+  message("Installing missing packages: ", paste(missing, collapse = ", "))
+  install.packages(missing, lib = lib, repos = repos, dependencies = TRUE)
+} else {
+  message("All required packages are already installed.")
+}
