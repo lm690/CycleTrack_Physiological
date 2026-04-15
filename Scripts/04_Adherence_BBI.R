@@ -31,16 +31,6 @@ print(dim(bbi_data))
 bbi_data$bbi <- suppressWarnings(as.numeric(bbi_data$bbi))
 bbi_data$unixTimestampInMs <- suppressWarnings(as.numeric(bbi_data$unixTimestampInMs))
 
-## ---- 6. Make sure timestamp exists ----
-## If ts_utc is missing, create it
-if (!"ts_utc" %in% names(bbi_data)) {
-  bbi_data$ts_utc <- as.POSIXct(
-    bbi_data$unixTimestampInMs / 1000,
-    origin = "2000-01-01",
-    tz = "UTC"
-  )
-}
-
 ## ---- 8. Sort data ----
 bbi_data <- bbi_data %>%
   arrange(participant_id, ts_utc)
