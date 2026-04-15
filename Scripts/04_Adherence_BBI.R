@@ -41,9 +41,6 @@ if (!"ts_utc" %in% names(bbi_data)) {
   )
 }
 
-## ---- 7. Create date variable ----
-bbi_data$date <- as.Date(bbi_data$ts_utc)
-
 ## ---- 8. Sort data ----
 bbi_data <- bbi_data %>%
   arrange(participant_id, ts_utc)
@@ -81,12 +78,12 @@ bbi_data <- bbi_data %>%
 
 ## ---- 15. Summarise by participant and date
 daily_adherence <- bbi_data %>%
-  group_by(participant_id, date) %>%
+  group_by(participant_id, date_local) %>%
   summarise(
     adherence_weartime_24hr = sum(wear_min, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  arrange(participant_id, date)
+  arrange(participant_id, date_local)
 
 ## ---- 16. Convert to percentage of a full 24 hours
 daily_adherence <- daily_adherence %>%
