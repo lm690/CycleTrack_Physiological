@@ -41,19 +41,16 @@ if (file_exists(step_file)) {
   step_data$steps <- suppressWarnings(as.numeric(step_data$steps))
   step_data$totalSteps <- suppressWarnings(as.numeric(step_data$totalSteps))
   
-  ## ---- 6. Make sure date exists ----
-  step_data$date <- as.Date(step_data$ts_utc)
-  
   ## ---- 7. Create simple daily step summary ----
   daily_steps <- step_data %>%
-    group_by(participant_id, date) %>%
+    group_by(participant_id, date_local) %>%
     summarise(
       steps_sum_24hr = sum(steps, na.rm = TRUE),
       steps_max_total_24hr = max(totalSteps, na.rm = TRUE),
       n_rows_step = n(),
       .groups = "drop"
     ) %>%
-    arrange(participant_id, date)
+    arrange(participant_id, date_local)
   
   ## ---- 8. Replace impossible max values if all missing ----
   daily_steps$steps_max_total_24hr[is.infinite(daily_steps$steps_max_total_24hr)] <- NA
@@ -85,16 +82,13 @@ if (file_exists(hr_file)) {
   ## ---- 13. Make heart-rate numeric ----
   hr_data$beatsPerMinute <- suppressWarnings(as.numeric(hr_data$beatsPerMinute))
   
-  ## ---- 14. Create date ----
-  hr_data$date <- as.Date(hr_data$ts_utc)
-  
   ## ---- 15. Keep rows with heart-rate values ----
   hr_data <- hr_data %>%
     filter(!is.na(beatsPerMinute))
   
   ## ---- 16. Create daily heart-rate summary ----
   daily_hr <- hr_data %>%
-    group_by(participant_id, date) %>%
+    group_by(participant_id, date_local) %>%
     summarise(
       hr_mean_24hr = mean(beatsPerMinute, na.rm = TRUE),
       hr_min_24hr = min(beatsPerMinute, na.rm = TRUE),
@@ -102,7 +96,7 @@ if (file_exists(hr_file)) {
       n_rows_hr = n(),
       .groups = "drop"
     ) %>%
-    arrange(participant_id, date)
+    arrange(participant_id, date_local)
   
   ## ---- 17. View result ----
   print(daily_hr)
@@ -131,23 +125,20 @@ if (file_exists(stress_file)) {
   ## ---- 21. Make stress numeric ----
   stress_data$stressLevel <- suppressWarnings(as.numeric(stress_data$stressLevel))
   
-  ## ---- 22. Create date ----
-  stress_data$date <- as.Date(stress_data$ts_utc)
-  
   ## ---- 23. Keep rows with stress values ----
   stress_data <- stress_data %>%
     filter(!is.na(stressLevel))
   
   ## ---- 24. Create daily stress summary ----
   daily_stress <- stress_data %>%
-    group_by(participant_id, date) %>%
+    group_by(participant_id, date_local) %>%
     summarise(
       stress_mean_24hr = mean(stressLevel, na.rm = TRUE),
       stress_max_24hr = max(stressLevel, na.rm = TRUE),
       n_rows_stress = n(),
       .groups = "drop"
     ) %>%
-    arrange(participant_id, date)
+    arrange(participant_id, date_local)
   
   ## ---- 25. View result ----
   print(daily_stress)
@@ -176,13 +167,10 @@ if (file_exists(bbi_file)) {
   ## ---- 29. Make BBI numeric ----
   bbi_data$bbi <- suppressWarnings(as.numeric(bbi_data$bbi))
   
-  ## ---- 30. Create date ----
-  bbi_data$date <- as.Date(bbi_data$ts_utc)
-  
   ## ---- 31. Create very simple daily BBI summary
   ## For now this is just a check file, not full HRV yet
   daily_bbi_check <- bbi_data %>%
-    group_by(participant_id, date) %>%
+    group_by(participant_id, date_local) %>%
     summarise(
       n_rows_bbi = n(),
       n_nonmissing_bbi = sum(!is.na(bbi)),
@@ -190,7 +178,7 @@ if (file_exists(bbi_file)) {
       sd_bbi_24hr = sd(bbi, na.rm = TRUE),
       .groups = "drop"
     ) %>%
-    arrange(participant_id, date)
+    arrange(participant_id, date_local)
   
   ## ---- 32. View result ----
   print(daily_bbi_check)
@@ -219,13 +207,13 @@ if (length(daily_list) > 0) {
   
   if (length(daily_list) > 1) {
     for (i in 2:length(daily_list)) {
-      daily_all <- full_join(daily_all, daily_list[[i]], by = c("participant_id", "date"))
+      daily_all <- full_join(daily_all, daily_list[[i]], by = c("participant_id", "date_local"))
     }
   }
   
   ## ---- 37. Sort rows ----
   daily_all <- daily_all %>%
-    arrange(participant_id, date)
+    arrange(participant_id, date_local)
   
   ## ---- 38. View combined daily file ----
   print(daily_all)
