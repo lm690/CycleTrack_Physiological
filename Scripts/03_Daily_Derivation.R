@@ -160,9 +160,9 @@ if (file_exists(stress_file)) {
 ## 			BBI CHECK FILE
 ## =========================================================
 
-## ---- 27. Read enhanced BBI data if it exists ----
+## ---- 27. Read enhanced BBI data ----
 type_folder <- Sys.getenv("TYPEDIR")
-bbi_file <- file.path(type_folder, "garmin_clean_garmin_device_bbi.rds")
+bbi_file <- file.path(type_folder, "garmin_clean_garmin_device_enhanced_bbi.rds")
 
 if (bbi_file == "") stop("No bbi file.")
 
